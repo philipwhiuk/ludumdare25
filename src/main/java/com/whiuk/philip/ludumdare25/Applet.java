@@ -1,4 +1,4 @@
-package com.whiuk.philip;
+package com.whiuk.philip.ludumdare25;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -41,8 +41,8 @@ public class Applet extends java.applet.Applet implements KeyListener, MouseList
 	}
 	private abstract class Character extends Rectangle implements Renderable, Updateable {
 		private Color color;
-		protected Room room;
-		public Character(int x, int y,Color color, Room r) {
+		Room room;
+		Character(int x, int y, Color color, Room r) {
 			super(x,y,CHAR_WIDTH,CHAR_HEIGHT);
 			this.color = color;
 			this.room = r;
@@ -144,8 +144,7 @@ public class Applet extends java.applet.Applet implements KeyListener, MouseList
 					}
 				}
 			}
-			
-			if(!player.intersects(room) && !doorIntersection) {
+			if(!room.contains(player) && !doorIntersection) {
 				x = xPrev;
 				y = yPrev;
 			}
@@ -222,7 +221,7 @@ public class Applet extends java.applet.Applet implements KeyListener, MouseList
 		private Path path;
 		public Room r1, r2;		
 
-		public Door(Path path,Room room1, Room room2) {
+		Door(Path path, Room room1, Room room2) {
 			if(path.equals(Path.NORTHSOUTH)) {
 				this.x = room2.x+12;
 				this.y = room2.y-5;
@@ -297,7 +296,7 @@ public class Applet extends java.applet.Applet implements KeyListener, MouseList
 			visible = true;
 			active = true;
 			player.setRoom(this);
-			logger.info("Entered room:"+xCol+","+yCol);
+			logger.debug("Entered room:"+xCol+","+yCol);
 		}
 		void exit() {
 			active = false;
@@ -311,16 +310,13 @@ public class Applet extends java.applet.Applet implements KeyListener, MouseList
 		
 		@Override
 		public void render(Graphics2D g) {
-			if (goal && active) {
+		    if (goal && active) {
 				g.setColor(GOAL_COLOR);
-			}
-			else if (active) {
+			} else if (active) {
 				g.setColor(FLOOR_COLOR);
-			}
-			else if (goal && visible) {
+			} else if (goal && visible) {
 				g.setColor(FOW_GOAL_COLOR);
-			}
-			else if (visible) {
+			} else if (visible) {
 				g.setColor(FOW_FLOOR_COLOR);
 			}
 			if(active || visible) {
@@ -341,7 +337,7 @@ public class Applet extends java.applet.Applet implements KeyListener, MouseList
 		private boolean hasDoor(Direction direction) {
 			return doors.containsKey(direction);
 		}
-		public void setGoal() {
+		void setGoal() {
 			this.goal = true;
 		}
 		public boolean isGoal() {
@@ -482,10 +478,10 @@ public class Applet extends java.applet.Applet implements KeyListener, MouseList
 		
 	}
 	
-	private enum GameState{GAME_IN_PROGRESS,GAME_PAUSED,GAME_END,HIGHSCORES,CREDITS,MAIN};
-	private enum Path {NORTHSOUTH,EASTWEST};
-	private enum Direction {NORTH,EAST,SOUTH,WEST};
-	private enum Action {COMPLETE_LEVEL};
+	private enum GameState{GAME_IN_PROGRESS,GAME_PAUSED,GAME_END,HIGHSCORES,CREDITS,MAIN}
+	private enum Path {NORTHSOUTH,EASTWEST}
+	private enum Direction {NORTH,EAST,SOUTH,WEST}
+	private enum Action {COMPLETE_LEVEL}
 	
 	private static final Font TITLE_FONT = new Font("Lucida Sans Unicode", Font.PLAIN, 24);
 
@@ -545,8 +541,8 @@ public class Applet extends java.applet.Applet implements KeyListener, MouseList
 	private float interpolation;
 	private Random random;
 
-	public static int CHAR_WIDTH = 10;
-	public static int CHAR_HEIGHT = 10;	
+	private static int CHAR_WIDTH = 10;
+	private static int CHAR_HEIGHT = 10;
 	
 	//Applet
 	public void init() {
@@ -611,9 +607,7 @@ public class Applet extends java.applet.Applet implements KeyListener, MouseList
 	@Override
 	public void keyTyped(KeyEvent e) {
 		if(gameState.equals(GameState.GAME_IN_PROGRESS)) {
-			gameKeyTyped(e);
-		}
-		else {
+		} else {
 			switch(e.getKeyChar()) {
 			case 'n':
 			case 'N':
@@ -628,7 +622,7 @@ public class Applet extends java.applet.Applet implements KeyListener, MouseList
 				highscores();
 				break;
 			default:
-				logger.info("Key Char: "+e.getKeyChar()+" undefined");					
+				logger.debug("Key Char: "+e.getKeyChar()+" undefined");
 			}
 		}
 	}
@@ -644,7 +638,7 @@ public class Applet extends java.applet.Applet implements KeyListener, MouseList
 					newGame();
 					break;
 			default:
-				logger.info("MAIN: Key Event undefined");
+				logger.debug("MAIN: Key Event undefined");
 			}					
 		}			
 	}
@@ -657,7 +651,7 @@ public class Applet extends java.applet.Applet implements KeyListener, MouseList
 			int kc = e.getKeyCode();
 			switch(kc) {
 			default:
-				logger.info("Key Event undefined");
+				logger.debug("Key Event undefined");
 			}					
 		}	
 	}
@@ -742,7 +736,7 @@ public class Applet extends java.applet.Applet implements KeyListener, MouseList
 			case KeyEvent.VK_ENTER:
 				player.performAction();				
 			default:
-				logger.info("[GAME] Key Event undefined");
+				logger.debug("[GAME] Key Event undefined");
 					
 		}
 	}
@@ -762,7 +756,7 @@ public class Applet extends java.applet.Applet implements KeyListener, MouseList
 				player.moveDown(false);
 				break;
 			default:
-				logger.info("[GAME] Key Event undefined");
+				logger.debug("[GAME] Key Event undefined");
 					
 		}
 	}
@@ -798,14 +792,13 @@ public class Applet extends java.applet.Applet implements KeyListener, MouseList
 	
 	private void levelUp() {		
 		level++;
-		logger.info("[GAME] Generating level "+level);
+		logger.debug("[GAME] Generating level "+level);
 		buildRooms();
 		player.setPosition(PLAYER_START_POS_X,PLAYER_START_POS_Y);
 		rooms[0][0].enter();
 		spawnEnemies(level*10);					
 	}	
 	private void buildRooms() {
-		ArrayList<Door> doors = new ArrayList<Door>();
 		rooms = new Room[ROOMS_X][ROOMS_Y];
 
 		for(int x = 0; x < ROOMS_X; x++) {
@@ -815,18 +808,18 @@ public class Applet extends java.applet.Applet implements KeyListener, MouseList
 		}
 		spawnGoal();
 		while(!pathToGoal()) {
-			logger.info("[GAME] Adding door");
+			logger.debug("[GAME] Adding door");
 			addDoor();
 		}
-		logger.info("[GAME] Built room layout");
+		logger.debug("[GAME] Built room layout");
 	}
 	private boolean pathToGoal() {
-		HashSet<Room> expanded = new HashSet<Room>();
-		LinkedList<Room> toExpand = new LinkedList<Room>();
+		HashSet<Room> expanded = new HashSet<>();
+		LinkedList<Room> toExpand = new LinkedList<>();
 		toExpand.add(rooms[0][0]);
 		while(toExpand.size() != 0) {	
 			Room r = toExpand.pop();
-			logger.info("[GAME] Expanding room:"+r.xCol+", "+r.yCol);
+			logger.debug("[GAME] Expanding room:"+r.xCol+", "+r.yCol);
 			expanded.add(r);
 			if(r.isGoal()) {
 				return true;
@@ -852,7 +845,7 @@ public class Applet extends java.applet.Applet implements KeyListener, MouseList
 		for(Room r : expanded) {
 			rooms += r.xCol+", "+r.yCol+" ::";
 		}
-		logger.info("Expanded: "+rooms);
+		logger.debug("Expanded: "+rooms);
 		return false;
 	}
 	private void spawnGoal() {
@@ -876,7 +869,7 @@ public class Applet extends java.applet.Applet implements KeyListener, MouseList
 					rooms[x][y+1].addDoor(Direction.NORTH,door);
 					return;
 				}
-				logger.info("[GAME] Failed to add door - already exists: "+x+", "+y+" - "+d);
+				logger.debug("[GAME] Failed to add door - already exists: "+x+", "+y+" - "+d);
 				failures++;
 			}
 			else if(!d && x+1 < ROOMS_X) {
@@ -886,14 +879,14 @@ public class Applet extends java.applet.Applet implements KeyListener, MouseList
 					rooms[x+1][y].addDoor(Direction.EAST,door);
 					return;
 				}
-				logger.info("[GAME] Failed to add door - already exists: "+x+", "+y+" - "+d);								
+				logger.debug("[GAME] Failed to add door - already exists: "+x+", "+y+" - "+d);
 				failures++;
 			}			
 		}
 		logger.warn("[GAME] Failed to add door "+failures+" times. Repathing");		
 	}
 	private void spawnEnemies(int count) {				
-		logger.info("[GAME] Spawning enemies");
+		logger.debug("[GAME] Spawning enemies");
 		for(int i = 0; i < count; i++) {
 			int x = 0, y = 0;
 			while(x == 0 && y == 0) {
